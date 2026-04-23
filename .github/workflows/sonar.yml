@@ -1,0 +1,37 @@
+name: SonarQube Scan
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: 'Node.js version for SonarQube scan'
+        required: false
+        type: string
+        default: '22'
+    secrets:
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build --if-present
+
+      - run: npm run test:coverage
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
