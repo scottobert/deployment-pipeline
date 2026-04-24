@@ -36,21 +36,16 @@ jobs:
 
       - run: npm run build --if-present
 
-      - name: Get npm OIDC token
-        run: |
-          IDTOKEN=$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npmjs" | jq -r '.value')
-          if [ -z "$IDTOKEN" ] || [ "$IDTOKEN" = "null" ]; then
-            echo "::error::Failed to obtain GitHub OIDC token"
-            exit 1
-          fi
-          echo "::add-mask::$IDTOKEN"
-          echo "NODE_AUTH_TOKEN=${IDTOKEN}" >> $GITHUB_ENV
-
       - name: Release
+        id: release
         run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-          NPM_CONFIG_PROVENANCE: true
           GIT_COMMITTER_NAME: scottobert
           GIT_COMMITTER_EMAIL: 13769142+scottobert@users.noreply.github.com
+
+      - name: Publish to npm via OIDC
+        if: steps.release.outputs.new_release_published == 'true'
+        run: |
+          npm config delete //registry.npmjs.org/:_authToken
+          npm publish --provenance --access public
