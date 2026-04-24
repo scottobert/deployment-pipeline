@@ -21,12 +21,12 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # semantic-release needs the full history to determine the next version
           persist-credentials: false # to avoid leaking credentials to third-party actions
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ inputs.node-version }}
           registry-url: https://registry.npmjs.org
