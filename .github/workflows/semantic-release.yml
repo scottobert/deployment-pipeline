@@ -36,7 +36,7 @@ jobs:
 
       - run: npm run build --if-present
 
-      - name: Get npm token via OIDC
+      - name: Get npm OIDC token
         run: |
           IDTOKEN=$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npmjs" | jq -r '.value')
@@ -44,24 +44,8 @@ jobs:
             echo "::error::Failed to obtain GitHub OIDC token"
             exit 1
           fi
-          RESPONSE=$(curl -sSL -w "\n%{http_code}" -X POST https://registry.npmjs.org/-/npm/v1/oidc/token \
-            -H 'Content-Type: application/json' \
-            --data-raw "{\"oidcToken\":\"${IDTOKEN}\"}")
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-          if [ "$HTTP_CODE" != "200" ]; then
-            echo "::error::npm OIDC token exchange failed (HTTP $HTTP_CODE): $BODY"
-            echo "::error::Ensure this repo/workflow is registered as a Trusted Publisher on npmjs.com for the package"
-            exit 1
-          fi
-          NPM_TOKEN=$(echo "$BODY" | jq -r '.token')
-          if [ -z "$NPM_TOKEN" ] || [ "$NPM_TOKEN" = "null" ]; then
-            echo "::error::npm OIDC response did not contain a token: $BODY"
-            exit 1
-          fi
-          echo "::add-mask::$NPM_TOKEN"
-          echo "NPM_TOKEN=${NPM_TOKEN}" >> $GITHUB_ENV
-          echo "NODE_AUTH_TOKEN=${NPM_TOKEN}" >> $GITHUB_ENV
+          echo "::add-mask::$IDTOKEN"
+          echo "NODE_AUTH_TOKEN=${IDTOKEN}" >> $GITHUB_ENV
 
       - name: Release
         run: npx semantic-release
