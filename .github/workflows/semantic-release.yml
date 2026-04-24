@@ -45,7 +45,12 @@ jobs:
           GIT_COMMITTER_EMAIL: 13769142+scottobert@users.noreply.github.com
 
       - name: Publish to npm via OIDC
-        if: steps.release.outputs.new_release_published == 'true'
         run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          PUBLISHED=$(npm view $(node -p "require('./package.json').name") version 2>/dev/null || echo "none")
+          if [ "$CURRENT" = "$PUBLISHED" ]; then
+            echo "Version $CURRENT already published, skipping"
+            exit 0
+          fi
           npm config delete //registry.npmjs.org/:_authToken
           npm publish --provenance --access public
