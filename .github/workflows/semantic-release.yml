@@ -44,7 +44,7 @@ jobs:
             echo "::error::Failed to obtain GitHub OIDC token"
             exit 1
           fi
-          RESPONSE=$(curl -fsSL -w "\n%{http_code}" -X POST https://registry.npmjs.org/-/npm/v1/oidc/token \
+          RESPONSE=$(curl -sSL -w "\n%{http_code}" -X POST https://registry.npmjs.org/-/npm/v1/oidc/token \
             -H 'Content-Type: application/json' \
             --data-raw "{\"oidcToken\":\"${IDTOKEN}\"}")
           HTTP_CODE=$(echo "$RESPONSE" | tail -1)
