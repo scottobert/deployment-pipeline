@@ -36,6 +36,17 @@ jobs:
 
       - run: npm run build --if-present
 
+      - name: Get npm token via OIDC
+        run: |
+          IDTOKEN=$(curl -fsSL -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npmjs" | jq -r '.value')
+          NPM_TOKEN=$(curl -fsSL -X POST https://registry.npmjs.org/-/npm/v1/oidc/token \
+            -H 'Content-Type: application/json' \
+            --data-raw "{\"oidcToken\":\"${IDTOKEN}\"}" | jq -r '.token')
+          echo "::add-mask::$NPM_TOKEN"
+          echo "NPM_TOKEN=${NPM_TOKEN}" >> $GITHUB_ENV
+          echo "NODE_AUTH_TOKEN=${NPM_TOKEN}" >> $GITHUB_ENV
+
       - name: Release
         run: npx semantic-release
         env:
